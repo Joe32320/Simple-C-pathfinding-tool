@@ -1,0 +1,156 @@
+int FindPathD(const int nStartX, const int nStartY, const int nTargetX, const int nTargetY, const unsigned char* pMap, const int nMapWidth, const int nMapHeight, int* pOutBuffer, const int nOutBufferSize){
+
+	//Finding the starting position place in pMap
+
+	int nStartinPMap = nStartX + (nStartY * nMapWidth);
+
+	//Finding the target position place in pMap
+
+	int nTargetinPMap = nTargetX + (nTargetY * nMapWidth);
+
+	//Length of pMap
+	int nMapLength = nMapWidth * nMapHeight;
+
+	queue<int> queue;
+	queue.push(nStartinPMap);
+
+	int nCurPos;
+
+
+	//In pointer test, 0 means unvisited, 1 means it was visited from the x+ direction, 2 x-, 3 y+, 4 y-, 5 is the start position and used to stop the tracking back algorithm later on
+	int* nVisitedFrom = new int[nMapLength];
+
+	//Adding 0 to nVisisted
+	for (int i = 0; i < nMapLength; i++){
+		nVisitedFrom[i] = 0;
+	}
+
+	//Marking the start position as START
+	nVisitedFrom[nStartinPMap] = 5;
+
+	//If target node reached, this becomes true
+	bool bTargetNodeReached = false;
+
+	while (!queue.empty()){
+
+		nCurPos = queue.front();
+
+		//Early exit if target node is found
+		if (nCurPos == nTargetinPMap){
+			bTargetNodeReached = true;
+			break;
+
+		}
+
+		//Check each neighbour node, whether it exists and is in the map, and whether its already been visited, if so, mark the direction it was visited from and push it into the queue
+		int nNorthPosition = nCurPos - nMapWidth; //northPosition is y-
+		if (nNorthPosition >= 0 && nNorthPosition < nMapLength && pMap[nNorthPosition] == 1 && nVisitedFrom[nNorthPosition] == 0){
+			nVisitedFrom[nNorthPosition] = 4;
+			queue.push(nNorthPosition);
+		}
+
+		int nEastPosition = nCurPos + 1; //eastPosition is x+
+		if (nEastPosition >= 0 && nEastPosition < nMapLength && pMap[nEastPosition] == 1 && nVisitedFrom[nEastPosition] == 0 && nEastPosition % nMapWidth != 0){
+			nVisitedFrom[nEastPosition] = 1;
+			queue.push(nEastPosition);			
+		}
+
+		int nSouthPosition = nCurPos + nMapWidth; //southPosition is y+
+		if (nSouthPosition >= 0 && nSouthPosition < nMapLength && pMap[nSouthPosition] == 1 && nVisitedFrom[nSouthPosition] < 1){
+			nVisitedFrom[nSouthPosition] = 3;
+			queue.push(nSouthPosition);
+		}
+
+		int nWestPosition = nCurPos - 1; //westPosition is x-
+		if (nWestPosition >= 0 && nWestPosition < nMapLength && pMap[nWestPosition] == 1 && nVisitedFrom[nWestPosition] == 0 && (nWestPosition + 1) % nMapWidth != 0){
+			nVisitedFrom[nWestPosition] = 2;
+			queue.push(nWestPosition);
+		}
+		
+		queue.pop();
+	}
+
+	
+	//This is returned by the function, default is -1, if node reached then returns the path length
+	int nPathLength = -1;
+	
+	//If target node reached, track back from it to start, count the steps, if less than the pOutBufferSize, add them to pOutBuffer
+	if (bTargetNodeReached){
+		
+		bool bCheck = true;
+		nPathLength = 0;
+
+		nCurPos = nTargetinPMap;
+
+		while (bCheck){
+
+			if (nVisitedFrom[nCurPos] == 1){
+				nCurPos = nCurPos - 1;
+			}
+			else if (nVisitedFrom[nCurPos] == 2){
+				nCurPos = nCurPos + 1;
+			}
+			else if(nVisitedFrom[nCurPos] == 3){
+				nCurPos = nCurPos - nMapWidth;
+			}
+			else if (nVisitedFrom[nCurPos] == 4){
+				nCurPos = nCurPos + nMapWidth;
+			}
+			else if (nVisitedFrom[nCurPos] == 5){
+				break;
+			}
+
+			nPathLength = nPathLength + 1;
+		}
+
+
+		//Having worked out the path length, if its within the size of OutBuffer, add them to OutBuffer from 0 to nPathLength -1.
+		if (nPathLength <= nOutBufferSize){
+
+			nCurPos = nTargetinPMap;
+
+			int nOutBufferIndice = nPathLength - 1;
+
+			pOutBuffer[nOutBufferIndice] = nTargetinPMap;
+
+
+			while (bCheck){
+				if (nOutBufferIndice != 0){
+					nOutBufferIndice = nOutBufferIndice - 1;
+
+				}
+				else{
+					break;
+				}
+
+
+				if (nVisitedFrom[nCurPos] == 1){
+					nCurPos = nCurPos - 1;
+
+				}
+				else if (nVisitedFrom[nCurPos] == 2){
+					nCurPos = nCurPos + 1;
+
+				}
+				else if (nVisitedFrom[nCurPos] == 3){
+					nCurPos = nCurPos - nMapWidth;
+
+				}
+				else if (nVisitedFrom[nCurPos] == 4){
+					nCurPos = nCurPos + nMapWidth;
+
+				}
+				else if (nVisitedFrom[nCurPos] == 5){
+					break;
+				}
+
+				pOutBuffer[nOutBufferIndice] = nCurPos;
+			}
+		}
+	}
+
+	delete[] nVisitedFrom;
+
+	return nPathLength;
+
+}
